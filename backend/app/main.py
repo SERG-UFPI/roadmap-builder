@@ -18,6 +18,7 @@ from backend.app.routers import (
     orgs,
     profile,
     projects,
+    requirements,
     roadmap,
 )
 
@@ -40,8 +41,18 @@ app.include_router(orgs.router)
 app.include_router(projects.router)
 app.include_router(dashboards.router)
 app.include_router(roadmap.router)
+app.include_router(requirements.router)
+
+if settings.dev_login_enabled:
+    logging.getLogger(__name__).warning(
+        "DEV_LOGIN_ENABLED=true — login local sem GitHub ativo. Não use em produção."
+    )
 
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "oauth_configured": settings.oauth_configured}
+    return {
+        "status": "ok",
+        "oauth_configured": settings.oauth_configured,
+        "dev_login": settings.dev_login_available,
+    }

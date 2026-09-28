@@ -24,6 +24,15 @@ export function AuthProvider({ children }) {
 
   const login = () => window.location.assign("/api/auth/github/login");
 
+  // Só existe com DEV_LOGIN_ENABLED=true no backend (usuário local, sem GitHub).
+  const devLogin = async () => {
+    await apiFetch("/api/auth/dev-login", {
+      method: "POST",
+      allowUnauthorized: true,
+    });
+    await refresh();
+  };
+
   const logout = async () => {
     try {
       await apiFetch("/api/auth/logout", {
@@ -38,7 +47,9 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, devLogin, logout, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );

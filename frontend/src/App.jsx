@@ -11,6 +11,7 @@ import Board from "./pages/dashboards/Board";
 import Devs from "./pages/dashboards/Devs";
 import MyIssues from "./pages/dashboards/MyIssues";
 import OrgIssues from "./pages/dashboards/OrgIssues";
+import SpecWorkspace from "./pages/requirements/SpecWorkspace";
 import "./App.css";
 
 function RequireAuth({ children }) {
@@ -157,6 +158,14 @@ export default function App() {
           element={
             <Protected>
               <ProjectDetail />
+            </Protected>
+          }
+        />
+        <Route
+          path="/projects/:id/requirements/:specId"
+          element={
+            <Protected>
+              <SpecWorkspace />
             </Protected>
           }
         />

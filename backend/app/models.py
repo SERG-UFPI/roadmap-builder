@@ -1,14 +1,22 @@
 """Modelos ORM.
 
 PR1: `User`. PR2: `Project`. PR3: `PhaseRun`. PR4: `Organization`,
-`OrgMembership`.
+`OrgMembership`. Requisitos: `RequirementsSpec`, `ConcernSpec`.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.app.db import Base
@@ -126,3 +134,60 @@ class OrgMembership(Base):
     @property
     def is_coordinator(self) -> bool:
         return self.role == "admin"
+
+
+class RequirementsSpec(Base):
+    """Especificação de requisitos de uma funcionalidade de ML (PerSpecML).
+
+    Um projeto pode ter várias (uma por funcionalidade/user story). Os concerns
+    analisados ficam em `ConcernSpec`; os que não têm linha estão pendentes.
+    """
+
+    __tablename__ = "requirements_specs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    title: Mapped[str] = mapped_column(String(512), default="")
+    # Entrada do processo: a funcionalidade em formato de user story +
+    # descrição adicional de requisitos (como no exemplo da Seção 3.9 do paper).
+    user_story: Mapped[str] = mapped_column(Text, default="", server_default="")
+    description: Mapped[str] = mapped_column(Text, default="", server_default="")
+    catalog: Mapped[str] = mapped_column(String(32), default="perspecml")
+    catalog_version: Mapped[str] = mapped_column(String(16), default="")
+    # {"BO": "Ana, Rui", "DS": "..."} — quem representa cada papel.
+    stakeholders_json: Mapped[str] = mapped_column(Text, default="{}", server_default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
+    )
+
+
+class ConcernSpec(Base):
+    """Análise de um concern do catálogo dentro de uma especificação."""
+
+    __tablename__ = "requirements_concerns"
+    __table_args__ = (
+        UniqueConstraint("spec_id", "concern_id", name="uq_concern_spec"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    spec_id: Mapped[int] = mapped_column(
+        ForeignKey("requirements_specs.id", ondelete="CASCADE"), index=True
+    )
+    concern_id: Mapped[str] = mapped_column(String(8))  # ex.: "O1", "M11"
+    # "pending" | "applicable" | "not_applicable" (verificação de aplicabilidade).
+    applicability: Mapped[str] = mapped_column(String(16), default="pending")
+    specification: Mapped[str] = mapped_column(Text, default="", server_default="")
+    # Justificativa (quando não aplicável) ou notas da discussão.
+    notes: Mapped[str] = mapped_column(Text, default="", server_default="")
+    # Concerns sujeitos a refinamento durante a experimentação (selo 'E').
+    needs_refinement: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0"
+    )
+    updated_by_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
+    )

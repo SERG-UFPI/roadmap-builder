@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../api/client";
 import BoardView from "./dashboards/BoardView";
+import RequirementsTab from "./requirements/RequirementsTab";
 
 const STATUS_LABEL = {
   created: "criada",
@@ -20,7 +21,11 @@ export default function ProjectDetail() {
   const [alertMode, setAlertMode] = useState(false); // on_duplicate = "error"
   const [busyPhase, setBusyPhase] = useState("");
   const [toast, setToast] = useState("");
-  const [view, setView] = useState("phases"); // "phases" | "board"
+  const [searchParams] = useSearchParams();
+  // "phases" | "board" | "requirements"
+  const [view, setView] = useState(
+    searchParams.get("tab") === "requirements" ? "requirements" : "phases",
+  );
   const [board, setBoard] = useState(null);
   const [boardLoading, setBoardLoading] = useState(false);
 
@@ -168,7 +173,17 @@ export default function ProjectDetail() {
         >
           Board
         </button>
+        <button
+          type="button"
+          className={`issue-tab ${view === "requirements" ? "active" : ""}`}
+          onClick={() => setView("requirements")}
+          title="Levantamento de requisitos das funcionalidades de ML (PerSpecML)"
+        >
+          Requisitos
+        </button>
       </div>
+
+      {view === "requirements" && <RequirementsTab projectId={id} />}
 
       {view === "board" && (
         <div className="board-page">

@@ -100,6 +100,22 @@ export default function Manual() {
           <strong>Board</strong> (aba) — as issues daquele repositório em
           colunas (ver seção 6).
         </li>
+        <li>
+          <strong>Requisitos</strong> (aba) — levantamento de requisitos das
+          funcionalidades de ML com o PerSpecML. Crie uma especificação a partir
+          da user story e siga a <em>análise guiada</em>, que percorre 5
+          perspectivas (Objetivos, Experiência do usuário, Infraestrutura,
+          Modelo e Dados), 28 tarefas e 60 concerns. Em cada concern, decida se
+          ele é <em>aplicável</em>; se for, responda à pergunta-guia (use “Ver
+          exemplo” para ver como o caso do empréstimo bancário respondeu). Para
+          conhecer o método, use{" "}
+          <em>Criar a partir do exemplo (empréstimo bancário)</em>. Os
+          stakeholders sugeridos para a tarefa e os concerns relacionados
+          aparecem ao lado. O <em>mapa de concerns</em> mostra o estado de tudo
+          e alerta sobre relações inconsistentes. Use <em>Exportar Markdown</em>{" "}
+          para gerar o documento de especificação. Esta aba não usa o GitHub,
+          então funciona sem PAT.
+        </li>
       </ul>
 
       <h2>5. Organização, tenant e papéis</h2>

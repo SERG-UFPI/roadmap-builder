@@ -29,12 +29,14 @@ def test_list_projects_empty(auth_client):
     assert auth_client.get("/api/projects").json() == []
 
 
-def test_list_projects_needs_pat_when_rows_exist(auth_client, db, user):
+def test_list_projects_without_pat_is_soft(auth_client, db, user):
     db.add(Project(created_by_user_id=user.id, owner="o", repo="r", title="x"))
     db.commit()
     r = auth_client.get("/api/projects")
-    assert r.status_code == 400
-    assert "PAT" in r.json()["detail"]
+    assert r.status_code == 200
+    [item] = r.json()
+    assert item["summary"] is None
+    assert "PAT" in item["summary_error"]
 
 
 def test_list_projects_enriches(monkeypatch, auth_client, db, user_with_pat):
