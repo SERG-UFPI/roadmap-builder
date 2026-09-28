@@ -1,11 +1,30 @@
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { apiFetch } from "../api/client";
 import { useAuth } from "../auth/useAuth";
 
 export default function Login() {
-  const { user, loading, login } = useAuth();
+  const { user, loading, login, devLogin } = useAuth();
+  const [devAvailable, setDevAvailable] = useState(false);
+  const [devError, setDevError] = useState("");
+
+  useEffect(() => {
+    apiFetch("/api/health", { allowUnauthorized: true })
+      .then((h) => setDevAvailable(Boolean(h?.dev_login)))
+      .catch(() => setDevAvailable(false));
+  }, []);
 
   if (loading) return <div className="page-center">Carregando…</div>;
   if (user) return <Navigate to="/" replace />;
+
+  const enterDev = async () => {
+    setDevError("");
+    try {
+      await devLogin();
+    } catch (e) {
+      setDevError(e.message);
+    }
+  };
 
   return (
     <div className="welcome-screen">
@@ -24,6 +43,19 @@ export default function Login() {
         <button onClick={login} className="btn-welcome-start">
           Entrar com GitHub ➔
         </button>
+        {devAvailable && (
+          <div className="dev-login">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={enterDev}
+              title="Disponível só em desenvolvimento (DEV_LOGIN_ENABLED=true). Não usa o GitHub."
+            >
+              Entrar como usuário local (dev)
+            </button>
+            {devError && <div className="message error">{devError}</div>}
+          </div>
+        )}
       </div>
     </div>
   );

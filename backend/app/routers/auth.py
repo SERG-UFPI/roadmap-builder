@@ -13,7 +13,7 @@ from backend.app import oauth
 from backend.app.config import get_settings
 from backend.app.db import get_db
 from backend.app.deps import get_current_user
-from backend.app.models import User, _utcnow
+from backend.app.models import Project, User, _utcnow
 from backend.app.security import issue_session
 from backend.app.services.orgs import sync_orgs
 
@@ -96,6 +96,46 @@ def github_callback(
     resp = RedirectResponse(settings.frontend_url, status_code=302)
     _set_session_cookie(resp, issue_session(user.id))
     resp.delete_cookie(settings.oauth_state_cookie_name, path="/")
+    return resp
+
+
+# Usuário local de desenvolvimento: github_id negativo nunca colide com um id
+# real do GitHub.
+DEV_GITHUB_ID = -1
+DEV_LOGIN = "dev-local"
+
+
+@router.post("/dev-login")
+def dev_login(db: Session = Depends(get_db)):
+    """Entra como usuário local, sem GitHub (só com DEV_LOGIN_ENABLED=true).
+
+    Na primeira vez cria o usuário e um projeto de demonstração para que as
+    telas que não dependem do GitHub (ex.: requisitos) possam ser validadas.
+    """
+    if not settings.dev_login_available:
+        raise HTTPException(status_code=404, detail="Not Found")
+
+    user = db.query(User).filter(User.github_id == DEV_GITHUB_ID).one_or_none()
+    if user is None:
+        user = User(github_id=DEV_GITHUB_ID, login=DEV_LOGIN, name="Usuário local (dev)")
+        db.add(user)
+        db.flush()
+        db.add(
+            Project(
+                created_by_user_id=user.id,
+                owner=DEV_LOGIN,
+                repo="demo-ml",
+                title="Projeto demo (local)",
+                source="imported",
+                org_login=DEV_LOGIN,
+            )
+        )
+    user.last_login_at = _utcnow()
+    db.commit()
+    db.refresh(user)
+
+    resp = JSONResponse({"ok": True, "login": user.login})
+    _set_session_cookie(resp, issue_session(user.id))
     return resp
 
 

@@ -33,6 +33,34 @@ cd frontend && npm install && npm run dev
 Abra `http://localhost:5173`, entre com o GitHub, configure o PAT no perfil
 (`repo` + `project`) e crie o roadmap pelo wizard.
 
+**Sem OAuth (só desenvolvimento):** com `DEV_LOGIN_ENABLED=true` no `.env`, a
+tela de login mostra **Entrar como usuário local (dev)**. Isso cria o usuário
+`dev-local` e um projeto demo (`dev-local/demo-ml`), o que basta para validar
+as telas que não dependem do GitHub, como a de requisitos. O login local é
+recusado quando `COOKIE_SECURE=true`.
+
+### Levantamento de requisitos (PerSpecML)
+
+A aba **Requisitos** do projeto guia a especificação de funcionalidades de ML
+segundo o PerSpecML (Villamizar et al., *JSS* 213, 2024,
+doi:10.1016/j.jss.2024.112053). Cada especificação parte de uma user story e
+percorre, na ordem do workflow do paper, as 5 perspectivas (objetivos do
+sistema, experiência do usuário, infraestrutura, modelo e dados), as 28 tarefas
+e os 60 concerns. Para cada concern há uma verificação de aplicabilidade e, se
+ele se aplicar, a resposta à pergunta-guia do template. O módulo mostra os
+stakeholders de cada tarefa e os concerns relacionados, e alerta quando um
+concern aplicável depende de outro marcado como não aplicável. A especificação
+pode ser exportada em Markdown no formato do template. O catálogo fica em
+`backend/app/services/perspecml_catalog.py`.
+
+Perguntas, dicas, itens a considerar e exemplos vêm do template do PerSpecML
+publicado no Miro (Villamizar et al., 2023), traduzidos para o português em
+`backend/app/services/perspecml_template.py`. O template cobre 47 dos 60
+concerns; os demais, incluídos na versão final do paper, usam uma pergunta
+adaptada e aparecem marcados como tal. O botão **Criar a partir do exemplo**
+gera a especificação do caso do empréstimo bancário, útil para conhecer o
+método.
+
 ### Multi-tenant e dashboards
 
 O tenant é a **organização do GitHub**: no login (escopo `read:org`) o app

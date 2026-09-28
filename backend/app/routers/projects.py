@@ -7,13 +7,13 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from backend.app.db import get_db
 from backend.app.deps import require_user
 from backend.app.github import humanize_error
-from backend.app.models import PhaseRun, Project, User
+from backend.app.models import ConcernSpec, PhaseRun, Project, RequirementsSpec, User
 from backend.app.routers.roadmap import RoadmapPayload
 from backend.app.security import decrypt_pat
 from backend.app.services.dashboards import collect_issues
@@ -132,10 +132,22 @@ def list_projects(user: User = Depends(require_user), db: Session = Depends(get_
         .scalars()
         .all()
     )
-    token = _pat(user) if rows else None
+    # Sem PAT a lista continua disponível (ex.: módulo de requisitos, que não
+    # usa o GitHub); só o resumo live de cada projeto fica indisponível.
+    token, token_error = None, None
+    if rows:
+        try:
+            token = _pat(user)
+        except HTTPException as exc:
+            token_error = exc.detail
     out = []
     for p in rows:
         item = _project_dict(p)
+        if token is None:
+            item["summary"] = None
+            item["summary_error"] = token_error
+            out.append(item)
+            continue
         try:
             item["summary"] = repo_summary(token, p.owner, p.repo)
         except Exception as exc:  # noqa: BLE001 — best-effort por projeto
@@ -343,6 +355,9 @@ def delete_project(
     p = db.get(Project, project_id)
     if p is None or p.created_by_user_id != user.id:
         raise HTTPException(status_code=404, detail="Projeto não encontrado.")
+    spec_ids = select(RequirementsSpec.id).where(RequirementsSpec.project_id == p.id)
+    db.execute(delete(ConcernSpec).where(ConcernSpec.spec_id.in_(spec_ids)))
+    db.execute(delete(RequirementsSpec).where(RequirementsSpec.project_id == p.id))
     db.delete(p)
     db.commit()
     return {"ok": True}

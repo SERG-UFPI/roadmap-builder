@@ -43,9 +43,18 @@ class Settings(BaseSettings):
     def allowed_origins_list(self) -> list[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
 
+    # --- Dev ---
+    # Login local sem GitHub (POST /api/auth/dev-login) para validar o app em
+    # desenvolvimento. Nunca habilite em produção; é recusado com COOKIE_SECURE.
+    dev_login_enabled: bool = False
+
     @property
     def oauth_configured(self) -> bool:
         return bool(self.github_oauth_client_id and self.github_oauth_client_secret)
+
+    @property
+    def dev_login_available(self) -> bool:
+        return self.dev_login_enabled and not self.cookie_secure
 
 
 @lru_cache
